@@ -24,6 +24,31 @@ public:
 /**
  *
  */
+class Name {
+public:
+	std::string *fname;
+	std::string *lname;
+};
+
+/**
+ * 
+ */
+class NameList {
+public:
+
+	NameList (FILE *fp);
+
+	NameList (std::list *l);
+	
+	NameList (char **string_array);
+
+	std::list<Name> nlist;
+};
+
+
+/**
+ *
+ */
 std::ostream& operator<<(std::ostream &ostream, const CmdLineArg &cmdLineArg) {
 	string flag;
 	string value;
@@ -108,6 +133,9 @@ bool parseArgs(int argc, char **argv, std::list<CmdLineArg> *argList) {
 
 	return true;
 }
+
+
+
 
 /*
  * 
