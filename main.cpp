@@ -7,6 +7,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <fstream>
 #include <list>
 #include <string>
 
@@ -28,6 +29,13 @@ class Name {
 public:
 	std::string *fname;
 	std::string *lname;
+	
+	/*
+	 * 
+	 */
+	Name (const std::string &name) {
+		fname = new std::string(name);
+	}
 };
 
 /**
@@ -35,14 +43,41 @@ public:
  */
 class NameList {
 public:
-
-	NameList (FILE *fp);
-
-	NameList (std::list *l);
 	
-	NameList (char **string_array);
+	std::list<Name> *names;	
 
-	std::list<Name> nlist;
+	/**
+	 * Filename constructor 
+	 */
+	NameList (const char * fname) {
+		Name * name;
+		std::string line;
+		std::ifstream inStream;
+		
+		cout << "Opening " << *fname << " for reading." << endl;
+		
+		inStream.open(fname, std::ifstream::in);	
+		
+		if (inStream.is_open()) {
+		  while (getline(inStream, line)) {
+			  name = new Name(this->trim(line));
+			  this->names->push_back(*name);
+		  }
+		  inStream.close();
+		} else {
+			cout << "Unable to open file"; 
+		}
+	};
+
+	/** 
+	 * trim helper
+	 */
+	std::string trim(std::string const& str) {
+		std::size_t first = str.find_first_not_of(' ');
+		std::size_t last  = str.find_last_not_of(' ');
+		return str.substr(first, last-first+1);
+	}	
+	
 };
 
 
@@ -71,6 +106,15 @@ std::ostream& operator<<(std::ostream &ostream, const CmdLineArg &cmdLineArg) {
 /**
  *
  */
+std::ostream& operator<<(std::ostream &ostream, const Name &name) {
+	string fname = (name.fname) ? *name.fname : "";
+	string lname = (name.lname) ? *name.lname : "";	
+	return ostream << "{" <<  fname << " " << lname << "}";
+}
+
+/**
+ *
+ */
 std::ostream& operator<<(std::ostream &ostream, const list<CmdLineArg> &argList) {
 	std::list<CmdLineArg>::const_iterator i;
 	for (i = argList.begin(); i != argList.end(); i++) {
@@ -78,6 +122,18 @@ std::ostream& operator<<(std::ostream &ostream, const list<CmdLineArg> &argList)
 	}
 	return ostream;
 }
+
+/**
+ *
+ */
+std::ostream& operator<<(std::ostream &ostream, const list<Name> &nameList) {
+	std::list<Name>::const_iterator i;
+	for (i = nameList.begin(); i != nameList.end(); i++) {
+		ostream << *i << endl;
+	}
+	return ostream;
+}
+
 
 /**
  *
@@ -134,8 +190,14 @@ bool parseArgs(int argc, char **argv, std::list<CmdLineArg> *argList) {
 	return true;
 }
 
-
-
+/** 
+ * trim helper
+ */
+std::string trim(std::string const& str) {
+    std::size_t first = str.find_first_not_of(' ');
+    std::size_t last  = str.find_last_not_of(' ');
+    return str.substr(first, last-first+1);
+}
 
 /*
  * 
@@ -151,6 +213,8 @@ int main(int argc, char** argv) {
 	cout << "Arg List:" << endl;
 	cout << argList << endl;
 
+	NameList * nl = new NameList("infile.txt");
+	
 	cout << "Done." << endl;
 
 	return 0;
