@@ -10,6 +10,8 @@
 #include <fstream>
 #include <list>
 #include <string>
+#include <vector>
+#include <sstream>
 
 using namespace std;
 
@@ -27,15 +29,46 @@ public:
  */
 class Name {
 public:
-	std::string *fname;
-	std::string *lname;
-	
+	std::string fname;
+	std::string lname;      
+    
 	/*
 	 * 
 	 */
 	Name (const std::string &name) {
-		fname = new std::string(name);
-	}
+        std::vector<std::string> f = split(name, ' ');
+
+        if (f.size() > 0) {
+            fname = f[0];
+            if (f.size() > 1) {
+                lname = f[1];
+            } else {
+               lname = "";
+            }
+        } else {
+            fname = "";
+            lname = "";
+        }
+    }
+    
+     std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
+       std::stringstream ss(s);
+       std::string item;
+       while (std::getline(ss, item, delim)) {
+           elems.push_back(item);
+       }
+       return elems;
+    }   
+    
+    /**
+     * 
+     */
+    std::vector<std::string> split(const std::string &s, char delim) {
+        std::vector<std::string> elems;
+        split(s, delim, elems);
+        return elems;
+    } 
+    
 };
 
 /**
@@ -44,13 +77,14 @@ public:
 class NameList {
 public:
 	
-	std::list<Name> *names;	
+	std::list<Name> names;	
 
 	/**
 	 * Filename constructor 
 	 */
 	NameList (const char * fname) {
 		Name * name;
+        std::string ln;
 		std::string line;
 		std::ifstream inStream;
 		
@@ -59,25 +93,25 @@ public:
 		inStream.open(fname, std::ifstream::in);	
 		
 		if (inStream.is_open()) {
-		  while (getline(inStream, line)) {
-			  name = new Name(this->trim(line));
-			  this->names->push_back(*name);
-		  }
-		  inStream.close();
+            while (getline(inStream, line)) {
+                if (line.length() == 0) {
+                    continue;
+                }
+
+                // trim 
+                std::size_t first = line.find_first_not_of(' ');
+                std::size_t last  = line.find_last_not_of(' ');              
+                ln = line.substr(first, last - first + 1);
+
+                name = new Name(ln);
+                names.push_back(*name);
+            }
+            inStream.close();
 		} else {
 			cout << "Unable to open file"; 
 		}
 	};
-
-	/** 
-	 * trim helper
-	 */
-	std::string trim(std::string const& str) {
-		std::size_t first = str.find_first_not_of(' ');
-		std::size_t last  = str.find_last_not_of(' ');
-		return str.substr(first, last-first+1);
-	}	
-	
+    
 };
 
 
@@ -107,9 +141,11 @@ std::ostream& operator<<(std::ostream &ostream, const CmdLineArg &cmdLineArg) {
  *
  */
 std::ostream& operator<<(std::ostream &ostream, const Name &name) {
-	string fname = (name.fname) ? *name.fname : "";
-	string lname = (name.lname) ? *name.lname : "";	
-	return ostream << "{" <<  fname << " " << lname << "}";
+    std::string delim = " ";
+    if (name.lname.compare("") == 0) {
+        delim = "";   
+    }
+	return ostream << "{" <<  name.fname << delim << name.lname << "}";
 }
 
 /**
@@ -126,9 +162,9 @@ std::ostream& operator<<(std::ostream &ostream, const list<CmdLineArg> &argList)
 /**
  *
  */
-std::ostream& operator<<(std::ostream &ostream, const list<Name> &nameList) {
+std::ostream& operator<<(std::ostream &ostream, const NameList &nameList) {
 	std::list<Name>::const_iterator i;
-	for (i = nameList.begin(); i != nameList.end(); i++) {
+	for (i = nameList.names.begin(); i != nameList.names.end(); i++) {
 		ostream << *i << endl;
 	}
 	return ostream;
@@ -213,8 +249,10 @@ int main(int argc, char** argv) {
 	cout << "Arg List:" << endl;
 	cout << argList << endl;
 
-	NameList * nl = new NameList("infile.txt");
+	NameList nameList = NameList("infile.txt");
 	
+    cout << nameList << endl;
+    
 	cout << "Done." << endl;
 
 	return 0;
